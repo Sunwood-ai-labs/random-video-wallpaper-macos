@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PIDFILE="$ROOT/.video-wallpaper.pid"
+APP_BIN="$ROOT/.build/Random Video Wallpaper.app/Contents/MacOS/random-video-wallpaper"
+STOPPED=0
+
+if [[ -f "$PIDFILE" ]]; then
+  PID="$(tr -d '[:space:]' < "$PIDFILE")"
+  if [[ -n "$PID" ]] && kill -0 "$PID" >/dev/null 2>&1; then
+    kill "$PID" >/dev/null 2>&1 || true
+    STOPPED=1
+  fi
+  rm -f "$PIDFILE"
+fi
+
+if pkill -f "$APP_BIN" >/dev/null 2>&1; then
+  STOPPED=1
+fi
+
+if pkill -f "$ROOT/.build/release/random-video-wallpaper" >/dev/null 2>&1; then
+  STOPPED=1
+fi
+
+if [[ "$STOPPED" == "1" ]]; then
+  echo "Stopped video wallpaper."
+else
+  echo "No video wallpaper process was running."
+fi

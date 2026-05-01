@@ -1,0 +1,5 @@
+.DS_Store
+.build/
+.swiftpm/
+.video-wallpaper.pid
+Package.resolved
