@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Add bilingual README files and VitePress documentation.
+- Add reusable SVG identity assets for README and docs.
+- Add GitHub Pages deployment workflow.
+
 ## 0.1.0
 
 - Initial public release.

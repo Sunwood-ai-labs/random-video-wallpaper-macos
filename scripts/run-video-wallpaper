@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CALLER_CWD="$PWD"
 PIDFILE="$ROOT/.video-wallpaper.pid"
 APP="$ROOT/.build/Random Video Wallpaper.app"
 APP_BIN="$APP/Contents/MacOS/random-video-wallpaper"
@@ -34,7 +35,7 @@ fi
 
 cd "$ROOT"
 swift build -c release
-"$ROOT/.build/release/random-video-wallpaper" --cwd "$PWD" --check "$@" >/dev/null
+"$ROOT/.build/release/random-video-wallpaper" --cwd "$CALLER_CWD" --check "$@" >/dev/null
 
 mkdir -p "$APP/Contents/MacOS"
 cp "$ROOT/.build/release/random-video-wallpaper" "$APP_BIN"
@@ -67,7 +68,7 @@ PLIST
 
 "$ROOT/scripts/stop-video-wallpaper" >/dev/null 2>&1 || true
 
-/usr/bin/open -n -g "$APP" --args --cwd "$PWD" "$@"
+/usr/bin/open -n -g "$APP" --args --cwd "$CALLER_CWD" "$@"
 sleep 1
 
 PID="$(pgrep -f "$APP_BIN" | tail -n 1 || true)"

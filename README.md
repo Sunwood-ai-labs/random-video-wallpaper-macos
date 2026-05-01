@@ -1,24 +1,38 @@
-# Random Video Wallpaper for macOS
-
-[![CI](https://github.com/Sunwood-ai-labs/random-video-wallpaper-macos/actions/workflows/ci.yml/badge.svg)](https://github.com/Sunwood-ai-labs/random-video-wallpaper-macos/actions/workflows/ci.yml)
-
-Turn a folder of local videos into a quiet, randomly looping desktop wallpaper.
+<div align="center">
+  <img src="assets/logo.svg" width="96" height="96" alt="Random Video Wallpaper logo">
+  <h1>Random Video Wallpaper for macOS</h1>
+  <p><strong>Turn a folder of local videos into a quiet, randomly looping desktop wallpaper with smooth crossfades.</strong></p>
+  <p>
+    <a href="README.md">English</a>
+    ·
+    <a href="README.ja.md">日本語</a>
+    ·
+    <a href="https://sunwood-ai-labs.github.io/random-video-wallpaper-macos/">Docs</a>
+  </p>
+  <p>
+    <a href="https://github.com/Sunwood-ai-labs/random-video-wallpaper-macos/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Sunwood-ai-labs/random-video-wallpaper-macos/actions/workflows/ci.yml/badge.svg"></a>
+    <a href="https://github.com/Sunwood-ai-labs/random-video-wallpaper-macos/actions/workflows/deploy-docs.yml"><img alt="Docs" src="https://github.com/Sunwood-ai-labs/random-video-wallpaper-macos/actions/workflows/deploy-docs.yml/badge.svg"></a>
+    <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-2f6f6f.svg"></a>
+    <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-5f6f89.svg">
+    <img alt="Swift" src="https://img.shields.io/badge/Swift-5.9-f05138.svg">
+  </p>
+</div>
 
 `random-video-wallpaper` is a tiny Swift/AppKit player that places borderless
 AVFoundation windows at the macOS desktop window level. It supports multiple
 displays, muted playback by default, recursive folder scans, glob patterns, and
-smooth crossfades between clips.
+two-layer crossfades between clips.
 
-## Features
+## ✨ Features
 
 - Random infinite playback from local `mp4`, `mov`, `m4v`, and `webm` files
-- Smooth crossfade transitions between clips
+- Smooth crossfade transitions with configurable duration
 - Runs behind normal app windows and ignores mouse input
 - Supports all displays, or only the main display
-- No network calls and no telemetry
+- No network calls, no telemetry, and no persistent media index
 - Plain Swift Package Manager project with small helper scripts
 
-## Requirements
+## 📦 Requirements
 
 - macOS 13 or later
 - Xcode Command Line Tools, including `swift`
@@ -29,7 +43,7 @@ Install the command line tools if needed:
 xcode-select --install
 ```
 
-## Quick Start
+## 🚀 Quick Start
 
 Clone and run:
 
@@ -39,7 +53,7 @@ cd random-video-wallpaper-macos
 scripts/run-video-wallpaper ~/Movies/wallpapers
 ```
 
-You can also pass files or globs:
+Use files or globs:
 
 ```sh
 scripts/run-video-wallpaper ~/Downloads/vending-stigmata-loop-*.mp4
@@ -51,7 +65,7 @@ Stop the wallpaper:
 scripts/stop-video-wallpaper
 ```
 
-## Options
+## 🎛️ Options
 
 ```sh
 scripts/run-video-wallpaper --fade 2.0 ~/Movies/wallpapers
@@ -73,7 +87,7 @@ scripts/run-video-wallpaper --level-offset 1 ~/Movies/wallpapers
 | `--level-offset N` | Raise or lower the desktop window level if needed. |
 | `--check` | Validate inputs and exit without starting playback. |
 
-## How It Works
+## 🧠 How It Works
 
 The helper script builds the Swift executable, wraps it in a tiny local `.app`
 bundle, and launches it with `open`. The app creates one borderless window per
@@ -84,29 +98,42 @@ macOS does not provide a public API for replacing the system wallpaper with an
 arbitrary video. This project uses a lightweight desktop-level window instead,
 which keeps the behavior simple and reversible.
 
-## Troubleshooting
+## 📚 Documentation
 
-If the wallpaper does not appear, try raising the window level slightly:
+The full guide is published with GitHub Pages:
+
+- [Getting Started](https://sunwood-ai-labs.github.io/random-video-wallpaper-macos/guide/getting-started)
+- [Usage](https://sunwood-ai-labs.github.io/random-video-wallpaper-macos/guide/usage)
+- [Architecture](https://sunwood-ai-labs.github.io/random-video-wallpaper-macos/guide/architecture)
+- [Troubleshooting](https://sunwood-ai-labs.github.io/random-video-wallpaper-macos/guide/troubleshooting)
+
+## 🧰 Development
+
+Build the release binary:
 
 ```sh
-scripts/run-video-wallpaper --level-offset 1 ~/Movies/wallpapers
+swift build -c release
 ```
 
-If a file is not picked up, check the extension and path:
+Validate a media folder without starting the wallpaper:
 
 ```sh
 .build/release/random-video-wallpaper --check ~/Movies/wallpapers
 ```
 
-If a clip does not play, confirm QuickTime can play it. AVFoundation supports
-many common formats, but codec support still depends on macOS.
+Build the documentation locally:
 
-## Privacy
+```sh
+npm ci --prefix docs
+npm run docs:build --prefix docs
+```
+
+## 🔒 Privacy
 
 The app only scans the paths you pass on the command line. It does not make
-network requests, collect analytics, or persist your video paths outside the
-local `.video-wallpaper.pid` used by the stop script.
+network requests, collect analytics, upload file names, or persist your video
+paths outside the local `.video-wallpaper.pid` used by the stop script.
 
-## License
+## 📄 License
 
 MIT

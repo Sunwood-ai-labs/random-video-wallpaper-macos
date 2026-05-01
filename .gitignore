@@ -2,4 +2,7 @@
 .build/
 .swiftpm/
 .video-wallpaper.pid
+node_modules/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
 Package.resolved
