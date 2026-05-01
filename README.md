@@ -1,5 +1,7 @@
 # Random Video Wallpaper for macOS
 
+[![CI](https://github.com/Sunwood-ai-labs/random-video-wallpaper-macos/actions/workflows/ci.yml/badge.svg)](https://github.com/Sunwood-ai-labs/random-video-wallpaper-macos/actions/workflows/ci.yml)
+
 Turn a folder of local videos into a quiet, randomly looping desktop wallpaper.
 
 `random-video-wallpaper` is a tiny Swift/AppKit player that places borderless
