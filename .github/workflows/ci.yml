@@ -16,3 +16,7 @@ jobs:
         run: swift build -c release
       - name: Show command help
         run: .build/release/random-video-wallpaper --help
+      - name: Install docs dependencies
+        run: npm ci --prefix docs
+      - name: Build docs
+        run: npm run docs:build --prefix docs
