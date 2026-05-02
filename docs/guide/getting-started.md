@@ -23,7 +23,14 @@ cd random-video-wallpaper-macos
 
 ## Start
 
-Pass a folder containing videos:
+Start the menu bar app:
+
+```sh
+scripts/run-video-wallpaper
+```
+
+Choose videos or a folder from the status menu. You can also pass a folder
+containing videos:
 
 ```sh
 scripts/run-video-wallpaper ~/Movies/wallpapers

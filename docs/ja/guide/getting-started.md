@@ -23,7 +23,14 @@ cd random-video-wallpaper-macos
 
 ## 起動
 
-動画が入ったフォルダを渡します。
+メニューバーアプリとして起動します。
+
+```sh
+scripts/run-video-wallpaper
+```
+
+ステータスメニューから動画やフォルダを選びます。動画が入ったフォルダを
+直接渡すこともできます。
 
 ```sh
 scripts/run-video-wallpaper ~/Movies/wallpapers

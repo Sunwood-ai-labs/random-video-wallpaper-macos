@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+APP_NAME="Random Video Wallpaper"
+BUNDLE_ID="${BUNDLE_ID:-dev.sunwood.random-video-wallpaper}"
+VERSION="${VERSION:-$(git -C "$ROOT" describe --tags --always --dirty 2>/dev/null || echo 0.1.0)}"
+DIST="$ROOT/dist"
+APP="$DIST/$APP_NAME.app"
+CONTENTS="$APP/Contents"
+MACOS="$CONTENTS/MacOS"
+RESOURCES="$CONTENTS/Resources"
+APP_BIN="$MACOS/random-video-wallpaper"
+ZIP="$DIST/RandomVideoWallpaper-$VERSION.zip"
+DMG="$DIST/RandomVideoWallpaper-$VERSION.dmg"
+
+cd "$ROOT"
+swift build -c release
+
+rm -rf "$APP" "$ZIP" "$DMG"
+mkdir -p "$MACOS" "$RESOURCES"
+
+cp "$ROOT/.build/release/random-video-wallpaper" "$APP_BIN"
+chmod +x "$APP_BIN"
+cp "$ROOT/assets/logo.svg" "$RESOURCES/logo.svg"
+
+cat >"$CONTENTS/Info.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleExecutable</key>
+  <string>random-video-wallpaper</string>
+  <key>CFBundleIdentifier</key>
+  <string>$BUNDLE_ID</string>
+  <key>CFBundleName</key>
+  <string>$APP_NAME</string>
+  <key>CFBundleDisplayName</key>
+  <string>$APP_NAME</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>$VERSION</string>
+  <key>CFBundleVersion</key>
+  <string>$VERSION</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>13.0</string>
+  <key>LSUIElement</key>
+  <true/>
+</dict>
+</plist>
+PLIST
+
+if command -v codesign >/dev/null 2>&1; then
+  if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
+    codesign --force --deep --options runtime --timestamp --sign "$CODESIGN_IDENTITY" "$APP"
+  else
+    codesign --force --deep --sign - "$APP"
+  fi
+fi
+
+ditto -c -k --keepParent "$APP" "$ZIP"
+
+if command -v hdiutil >/dev/null 2>&1; then
+  hdiutil create -volname "$APP_NAME" -srcfolder "$APP" -ov -format UDZO "$DMG" >/dev/null
+fi
+
+echo "Built: $APP"
+echo "Zip:   $ZIP"
+if [[ -f "$DMG" ]]; then
+  echo "DMG:   $DMG"
+fi

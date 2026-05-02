@@ -27,6 +27,8 @@ two-layer crossfades between clips.
 
 - Random infinite playback from local `mp4`, `mov`, `m4v`, and `webm` files
 - Smooth crossfade transitions with configurable duration
+- Menu bar mode with folder selection and start/stop controls
+- Low power mode for one-display playback with shorter fades
 - Runs behind normal app windows and ignores mouse input
 - Supports all displays, or only the main display
 - No network calls, no telemetry, and no persistent media index
@@ -50,6 +52,15 @@ Clone and run:
 ```sh
 git clone https://github.com/Sunwood-ai-labs/random-video-wallpaper-macos.git
 cd random-video-wallpaper-macos
+scripts/run-video-wallpaper
+```
+
+The app starts in the menu bar. Choose videos or a folder from the menu, then
+stop or change display options without returning to the terminal.
+
+You can also start directly with a folder:
+
+```sh
 scripts/run-video-wallpaper ~/Movies/wallpapers
 ```
 
@@ -69,6 +80,7 @@ scripts/stop-video-wallpaper
 
 ```sh
 scripts/run-video-wallpaper --fade 2.0 ~/Movies/wallpapers
+scripts/run-video-wallpaper --low-power ~/Movies/wallpapers
 scripts/run-video-wallpaper --fit ~/Movies/wallpapers
 scripts/run-video-wallpaper --only-main ~/Movies/wallpapers
 scripts/run-video-wallpaper --no-recursive ~/Movies/wallpapers
@@ -79,6 +91,7 @@ scripts/run-video-wallpaper --level-offset 1 ~/Movies/wallpapers
 | Option | Description |
 | --- | --- |
 | `--fade SECONDS` | Crossfade duration. Default: `1.2`. |
+| `--low-power` | Prefer the main display and cap fades at `0.5` seconds. |
 | `--fit` | Letterbox the video instead of cropping. |
 | `--fill` | Crop to fill the screen. This is the default. |
 | `--only-main` | Use only the main display. |
@@ -114,6 +127,16 @@ Build the release binary:
 ```sh
 swift build -c release
 ```
+
+Build a distributable app bundle, zip, and DMG:
+
+```sh
+VERSION=0.2.0 scripts/build-release-app
+```
+
+The local package is ad-hoc signed by default. For public distribution without
+Gatekeeper friction, set `CODESIGN_IDENTITY` to a Developer ID Application
+certificate and notarize the zip or DMG before publishing.
 
 Validate a media folder without starting the wallpaper:
 

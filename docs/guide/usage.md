@@ -6,9 +6,11 @@ recursively by default.
 ## Common Commands
 
 ```sh
+scripts/run-video-wallpaper
 scripts/run-video-wallpaper ~/Movies/wallpapers
 scripts/run-video-wallpaper ~/Downloads/*.mp4
 scripts/run-video-wallpaper --fade 2.0 ~/Movies/wallpapers
+scripts/run-video-wallpaper --low-power ~/Movies/wallpapers
 scripts/stop-video-wallpaper
 ```
 
@@ -17,6 +19,7 @@ scripts/stop-video-wallpaper
 | Option | Description |
 | --- | --- |
 | `--fade SECONDS` | Crossfade duration. Default: `1.2`. |
+| `--low-power` | Prefer the main display and cap fades at `0.5` seconds. |
 | `--fit` | Letterbox the video instead of cropping. |
 | `--fill` | Crop to fill the screen. This is the default. |
 | `--only-main` | Use only the main display. |
@@ -33,6 +36,15 @@ By default, the app creates one wallpaper window per connected display. Add
 ```sh
 scripts/run-video-wallpaper --only-main ~/Movies/wallpapers
 ```
+
+Use `--low-power` when you want the conservative default for laptops:
+
+```sh
+scripts/run-video-wallpaper --low-power ~/Movies/wallpapers
+```
+
+Low power mode enables main-display-only playback and caps crossfades at `0.5`
+seconds.
 
 ## Crop or Fit
 

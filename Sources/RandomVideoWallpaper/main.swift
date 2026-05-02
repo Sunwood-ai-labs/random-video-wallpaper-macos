@@ -9,6 +9,7 @@ private struct Options {
     var inputs: [String] = []
     var workingDirectory = FileManager.default.currentDirectoryPath
     var checkOnly = false
+    var lowPowerMode = false
     var recursive = true
     var muted = true
     var onlyMainScreen = false
@@ -36,6 +37,10 @@ private enum VideoWallpaperError: Error, CustomStringConvertible {
             return "No video files found for: \(inputs.joined(separator: ", "))"
         }
     }
+}
+
+private enum DefaultsKeys {
+    static let lastInputs = "lastInputs"
 }
 
 private final class Playlist {
@@ -281,18 +286,27 @@ private final class WallpaperScene {
 }
 
 private final class AppController: NSObject, NSApplicationDelegate {
-    private let playlist: Playlist
-    private let options: Options
+    private var playlist: Playlist?
+    private var options: Options
     private var scenes: [WallpaperScene] = []
     private var observers: [(NotificationCenter, NSObjectProtocol)] = []
+    private var statusItem: NSStatusItem?
+    private let statusMenu = NSMenu()
 
-    init(playlist: Playlist, options: Options) {
+    init(playlist: Playlist?, options: Options) {
         self.playlist = playlist
         self.options = options
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        rebuildScenes()
+        installStatusItem()
+        if playlist != nil {
+            rebuildScenes()
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.chooseMedia()
+            }
+        }
 
         observers.append(
             (
@@ -325,10 +339,14 @@ private final class AppController: NSObject, NSApplicationDelegate {
         observers.forEach { center, observer in
             center.removeObserver(observer)
         }
-        scenes.forEach { $0.close() }
+        stopWallpaper()
     }
 
     private func rebuildScenes() {
+        guard let playlist else {
+            return
+        }
+
         scenes.forEach { $0.close() }
         let screens = options.onlyMainScreen
             ? NSScreen.main.map { [$0] } ?? NSScreen.screens
@@ -337,10 +355,172 @@ private final class AppController: NSObject, NSApplicationDelegate {
         scenes = screens.map {
             WallpaperScene(screen: $0, playlist: playlist, options: options)
         }
+        rebuildMenu()
     }
 
     private func orderScenes() {
         scenes.forEach { $0.orderFront() }
+    }
+
+    private func stopWallpaper() {
+        scenes.forEach { $0.close() }
+        scenes.removeAll()
+        playlist = nil
+        rebuildMenu()
+    }
+
+    private func installStatusItem() {
+        statusMenu.autoenablesItems = false
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        if let button = statusItem?.button {
+            button.image = NSImage(
+                systemSymbolName: "play.rectangle.on.rectangle",
+                accessibilityDescription: "Random Video Wallpaper"
+            )
+            button.title = button.image == nil ? "RVW" : ""
+        }
+        statusItem?.menu = statusMenu
+        rebuildMenu()
+    }
+
+    private func rebuildMenu() {
+        statusMenu.removeAllItems()
+
+        let statusTitle: String
+        if let playlist {
+            statusTitle = "Playing \(playlist.urls.count) video\(playlist.urls.count == 1 ? "" : "s")"
+        } else {
+            statusTitle = "Stopped"
+        }
+
+        let status = NSMenuItem(title: statusTitle, action: nil, keyEquivalent: "")
+        status.isEnabled = false
+        statusMenu.addItem(status)
+        statusMenu.addItem(.separator())
+
+        statusMenu.addItem(menuItem("Choose Videos or Folder...", #selector(chooseMedia), "o"))
+
+        let startLast = menuItem("Start Last Selection", #selector(startLastSelection), "")
+        startLast.isEnabled = UserDefaults.standard.stringArray(forKey: DefaultsKeys.lastInputs)?.isEmpty == false
+        statusMenu.addItem(startLast)
+
+        let stop = menuItem("Stop Wallpaper", #selector(stopWallpaperFromMenu), "")
+        stop.isEnabled = playlist != nil
+        statusMenu.addItem(stop)
+        statusMenu.addItem(.separator())
+
+        let lowPower = menuItem("Low Power Mode", #selector(toggleLowPowerMode), "")
+        lowPower.state = options.lowPowerMode ? .on : .off
+        statusMenu.addItem(lowPower)
+
+        let onlyMain = menuItem("Main Display Only", #selector(toggleOnlyMainScreen), "")
+        onlyMain.state = options.onlyMainScreen ? .on : .off
+        statusMenu.addItem(onlyMain)
+
+        let fit = menuItem("Fit Instead of Fill", #selector(toggleFitMode), "")
+        fit.state = options.videoGravity == .resizeAspect ? .on : .off
+        statusMenu.addItem(fit)
+
+        let sound = menuItem("Sound", #selector(toggleSound), "")
+        sound.state = options.muted ? .off : .on
+        statusMenu.addItem(sound)
+        statusMenu.addItem(.separator())
+
+        statusMenu.addItem(menuItem("Quit", #selector(quit), "q"))
+    }
+
+    private func menuItem(_ title: String, _ action: Selector, _ keyEquivalent: String) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: keyEquivalent)
+        item.target = self
+        return item
+    }
+
+    private func start(inputs: [String]) {
+        var nextOptions = options
+        nextOptions.inputs = inputs
+        nextOptions = applyLowPowerDefaults(to: nextOptions)
+
+        do {
+            let nextPlaylist = try resolvePlaylist(options: nextOptions)
+            UserDefaults.standard.set(inputs, forKey: DefaultsKeys.lastInputs)
+            options = nextOptions
+            playlist = nextPlaylist
+            rebuildScenes()
+        } catch {
+            showError(error)
+        }
+    }
+
+    @objc private func chooseMedia() {
+        let panel = NSOpenPanel()
+        panel.title = "Choose videos or a folder"
+        panel.message = "Choose one or more videos or folders to use as the wallpaper playlist."
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = true
+        panel.resolvesAliases = true
+
+        NSApp.activate(ignoringOtherApps: true)
+        guard panel.runModal() == .OK else {
+            rebuildMenu()
+            return
+        }
+
+        start(inputs: panel.urls.map(\.path))
+    }
+
+    @objc private func startLastSelection() {
+        guard let inputs = UserDefaults.standard.stringArray(forKey: DefaultsKeys.lastInputs),
+              !inputs.isEmpty else {
+            chooseMedia()
+            return
+        }
+
+        start(inputs: inputs)
+    }
+
+    @objc private func stopWallpaperFromMenu() {
+        stopWallpaper()
+    }
+
+    @objc private func toggleLowPowerMode() {
+        options.lowPowerMode.toggle()
+        options = applyLowPowerDefaults(to: options)
+        rebuildScenes()
+        rebuildMenu()
+    }
+
+    @objc private func toggleOnlyMainScreen() {
+        options.onlyMainScreen.toggle()
+        rebuildScenes()
+        rebuildMenu()
+    }
+
+    @objc private func toggleFitMode() {
+        options.videoGravity = options.videoGravity == .resizeAspect ? .resizeAspectFill : .resizeAspect
+        rebuildScenes()
+        rebuildMenu()
+    }
+
+    @objc private func toggleSound() {
+        options.muted.toggle()
+        rebuildScenes()
+        rebuildMenu()
+    }
+
+    @objc private func quit() {
+        NSApp.terminate(nil)
+    }
+
+    private func showError(_ error: Error) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Could not start wallpaper"
+        alert.informativeText = String(describing: error)
+        alert.addButton(withTitle: "OK")
+        NSApp.activate(ignoringOtherApps: true)
+        alert.runModal()
+        rebuildMenu()
     }
 }
 
@@ -359,6 +539,7 @@ private func printUsage() {
           --fit             Letterbox instead of cropping to fill the screen.
           --fill            Crop to fill the screen. This is the default.
           --fade SECONDS    Crossfade duration. Default is 1.2.
+          --low-power       Prefer one display and shorter fades.
           --no-recursive    Do not scan subfolders.
           --only-main       Use only the main display.
           --sound           Keep video audio on. Default is muted.
@@ -393,6 +574,8 @@ private func parseOptions(arguments: [String]) throws -> Options {
                 throw VideoWallpaperError.badOption("--fade \(arguments[index])")
             }
             options.fadeDuration = value
+        case "--low-power":
+            options.lowPowerMode = true
         case "--no-recursive":
             options.recursive = false
         case "--only-main":
@@ -430,6 +613,15 @@ private func parseOptions(arguments: [String]) throws -> Options {
     }
 
     return options
+}
+
+private func applyLowPowerDefaults(to options: Options) -> Options {
+    var adjusted = options
+    if adjusted.lowPowerMode {
+        adjusted.onlyMainScreen = true
+        adjusted.fadeDuration = min(adjusted.fadeDuration, 0.5)
+    }
+    return adjusted
 }
 
 private func normalizedInput(_ input: String) -> String {
@@ -545,10 +737,13 @@ private func resolvePlaylist(options: Options) throws -> Playlist {
 private var retainedController: AppController?
 
 do {
-    let options = try parseOptions(arguments: Array(CommandLine.arguments.dropFirst()))
-    let playlist = try resolvePlaylist(options: options)
+    let options = applyLowPowerDefaults(
+        to: try parseOptions(arguments: Array(CommandLine.arguments.dropFirst()))
+    )
+    let shouldResolvePlaylist = options.checkOnly || !options.inputs.isEmpty
+    let playlist = try shouldResolvePlaylist ? resolvePlaylist(options: options) : nil
     if options.checkOnly {
-        print("RandomVideoWallpaper: found \(playlist.urls.count) video(s).")
+        print("RandomVideoWallpaper: found \(playlist?.urls.count ?? 0) video(s).")
         exit(0)
     }
 
@@ -557,8 +752,12 @@ do {
     retainedController = AppController(playlist: playlist, options: options)
     app.delegate = retainedController
 
-    print("RandomVideoWallpaper: playing \(playlist.urls.count) video(s).")
-    print("RandomVideoWallpaper: press Ctrl-C or run scripts/stop-video-wallpaper to stop.")
+    if let playlist {
+        print("RandomVideoWallpaper: playing \(playlist.urls.count) video(s).")
+        print("RandomVideoWallpaper: press Ctrl-C or run scripts/stop-video-wallpaper to stop.")
+    } else {
+        print("RandomVideoWallpaper: menu bar app started.")
+    }
     app.run()
 } catch {
     fputs("random-video-wallpaper: \(error)\n", stderr)

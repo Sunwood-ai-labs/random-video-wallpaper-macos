@@ -7,6 +7,8 @@ desktop-level windows and AVFoundation for playback.
 
 - `scripts/run-video-wallpaper` builds the executable, creates a local `.app`,
   validates the inputs, and launches the app with `open`.
+- `scripts/build-release-app` creates a distributable `.app`, zip, and DMG in
+  `dist/`.
 - `scripts/stop-video-wallpaper` stops the app process recorded in
   `.video-wallpaper.pid`.
 - `Sources/RandomVideoWallpaper/main.swift` contains the CLI parsing, playlist
@@ -30,3 +32,10 @@ the prepared clip and animates layer opacity to crossfade between them.
 
 The app only reads local paths that you pass on the command line. It does not
 make network requests, upload file names, or keep a database of your media.
+
+## Distribution Model
+
+The release script ad-hoc signs local builds so macOS can validate bundle
+integrity during development. Public distribution should use a Developer ID
+Application certificate, hardened runtime signing, notarization, and a stapled
+notarization ticket before publishing the zip or DMG.

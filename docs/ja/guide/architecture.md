@@ -7,6 +7,7 @@ Random Video Wallpaper は意図的に小さく作っています。デスクト
 
 - `scripts/run-video-wallpaper` は実行ファイルをビルドし、ローカル `.app`
   を作り、入力を検証して `open` で起動します。
+- `scripts/build-release-app` は `dist/` に配布用 `.app`、zip、DMG を作成します。
 - `scripts/stop-video-wallpaper` は `.video-wallpaper.pid` に記録された
   プロセスを停止します。
 - `Sources/RandomVideoWallpaper/main.swift` は CLI 解析、プレイリスト走査、
@@ -30,3 +31,9 @@ Random Video Wallpaper は意図的に小さく作っています。デスクト
 
 アプリが読むのはコマンドラインで渡されたローカルパスだけです。
 ネットワーク通信、ファイル名のアップロード、メディアデータベースの保持は行いません。
+
+## 配布モデル
+
+リリーススクリプトは開発用に ad-hoc 署名したローカルビルドを作成します。
+一般配布では Developer ID Application 証明書、hardened runtime 署名、
+notarization、notarization ticket の staple を行ってから zip または DMG を公開します。

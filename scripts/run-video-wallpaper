@@ -8,7 +8,7 @@ APP="$ROOT/.build/Random Video Wallpaper.app"
 APP_BIN="$APP/Contents/MacOS/random-video-wallpaper"
 APP_PLIST="$APP/Contents/Info.plist"
 
-if [[ $# -eq 0 || "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   if [[ -x "$ROOT/.build/release/random-video-wallpaper" ]]; then
     "$ROOT/.build/release/random-video-wallpaper" --help
   else
@@ -20,22 +20,23 @@ USAGE
   cat <<'USAGE'
 
 Build and start the video wallpaper:
+  scripts/run-video-wallpaper
   scripts/run-video-wallpaper ~/Movies/wallpapers
   scripts/run-video-wallpaper ~/Movies/wallpapers/vending-stigmata-loop-*.mp4
   scripts/run-video-wallpaper --fade 2.0 ~/Movies/wallpapers
+  scripts/run-video-wallpaper --low-power ~/Movies/wallpapers
 
 Stop it:
   scripts/stop-video-wallpaper
 USAGE
-  if [[ $# -eq 0 ]]; then
-    exit 64
-  fi
   exit 0
 fi
 
 cd "$ROOT"
 swift build -c release
-"$ROOT/.build/release/random-video-wallpaper" --cwd "$CALLER_CWD" --check "$@" >/dev/null
+if [[ $# -gt 0 ]]; then
+  "$ROOT/.build/release/random-video-wallpaper" --cwd "$CALLER_CWD" --check "$@" >/dev/null
+fi
 
 mkdir -p "$APP/Contents/MacOS"
 cp "$ROOT/.build/release/random-video-wallpaper" "$APP_BIN"

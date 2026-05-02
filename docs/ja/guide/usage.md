@@ -6,9 +6,11 @@
 ## よく使うコマンド
 
 ```sh
+scripts/run-video-wallpaper
 scripts/run-video-wallpaper ~/Movies/wallpapers
 scripts/run-video-wallpaper ~/Downloads/*.mp4
 scripts/run-video-wallpaper --fade 2.0 ~/Movies/wallpapers
+scripts/run-video-wallpaper --low-power ~/Movies/wallpapers
 scripts/stop-video-wallpaper
 ```
 
@@ -17,6 +19,7 @@ scripts/stop-video-wallpaper
 | オプション | 説明 |
 | --- | --- |
 | `--fade SECONDS` | クロスフェード秒数。デフォルトは `1.2`。 |
+| `--low-power` | メインディスプレイのみを優先し、フェードを `0.5` 秒以下にする。 |
 | `--fit` | 画面に収める表示。余白が出る場合があります。 |
 | `--fill` | 画面いっぱいに表示。デフォルトです。 |
 | `--only-main` | メインディスプレイのみで再生。 |
@@ -33,6 +36,14 @@ scripts/stop-video-wallpaper
 ```sh
 scripts/run-video-wallpaper --only-main ~/Movies/wallpapers
 ```
+
+ラップトップ向けに控えめな設定で起動するなら `--low-power` を使います。
+
+```sh
+scripts/run-video-wallpaper --low-power ~/Movies/wallpapers
+```
+
+低電力モードではメインディスプレイのみを使い、クロスフェードを `0.5` 秒以下にします。
 
 ## クロップまたはフィット
 

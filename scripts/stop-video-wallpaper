@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PIDFILE="$ROOT/.video-wallpaper.pid"
 APP_BIN="$ROOT/.build/Random Video Wallpaper.app/Contents/MacOS/random-video-wallpaper"
+DIST_APP_BIN="$ROOT/dist/Random Video Wallpaper.app/Contents/MacOS/random-video-wallpaper"
 STOPPED=0
 
 if [[ -f "$PIDFILE" ]]; then
@@ -16,6 +17,10 @@ if [[ -f "$PIDFILE" ]]; then
 fi
 
 if pkill -f "$APP_BIN" >/dev/null 2>&1; then
+  STOPPED=1
+fi
+
+if pkill -f "$DIST_APP_BIN" >/dev/null 2>&1; then
   STOPPED=1
 fi
 
